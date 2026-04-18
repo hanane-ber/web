@@ -1,87 +1,40 @@
 $(document).ready(function () {
-
-    // Add a new course row
+    // 1. إضافة صف جديد للمواد عند الضغط على الزر
     $('#addCourse').click(function () {
+        // نأخذ نسخة من الصف الأول
         var row = $('.course-row').first().clone();
-        row.find('input').val('');
-        row.append(
-            '<div class="col-auto">' +
-            '<button type="button" ' +
-            'class="btn btn-danger remove-row">X</button>' +
-            '</div>'
-        );
+        // تصفير القيم في الصف الجديد
+        row.find('input[type="text"]').val('');
+        row.find('input[type="number"]').val('');
+        // إضافة زر الحذف للصف الجديد
+        row.append('<div class="col-auto"><button type="button" class="btn btn-danger remove-row">X</button></div>');
         $('#courses').append(row);
     });
 
-    // Remove a course row
+    // 2. حذف الصف عند الضغط على زر X
     $(document).on('click', '.remove-row', function () {
-        if ($('.course-row').length > 1) {
-            $(this).closest('.course-row').remove();
-        }
+        $(this).closest('.course-row').remove();
     });
 
-    // Submit via AJAX
+    // 3. معالجة إرسال البيانات (Form Submission) عبر AJAX
     $('#gpaForm').submit(function (e) {
-        e.preventDefault();
-
-        // Client-side validation
-        var valid = true;
-        $('input[name="course[]"]').each(function () {
-            if ($(this).val().trim() === '') valid = false;
-        });
-        $('input[name="credits[]"]').each(function () {
-            if (isNaN($(this).val()) || parseFloat($(this).val()) <= 0) {
-                valid = false;
-            }
-        });
-
-        if (!valid) {
-            $('#result').html(
-                '<div class="alert alert-warning">' +
-                'Please enter valid values in all fields.' +
-                '</div>'
-            );
-            return;
-        }
+        e.preventDefault(); // منع إعادة تحميل الصفحة
 
         $.ajax({
-            url: 'calculate.php',
+            url: 'calculate_ajax.php', // الملف الذي يعالج البيانات في الخلفية
             type: 'POST',
-            data: $(this).serialize(),
+            data: $(this).serialize(), // تحويل بيانات النموذج إلى صيغة قابلة للإرسال
             dataType: 'json',
             success: function (response) {
                 if (response.success) {
-                    var alertClass = 'alert-info';
-                    if (response.gpa >= 3.7) {
-                        alertClass = 'alert-success';
-                    } else if (response.gpa >= 3.0) {
-                        alertClass = 'alert-info';
-                    } else if (response.gpa >= 2.0) {
-                        alertClass = 'alert-warning';
-                    } else {
-                        alertClass = 'alert-danger';
-                    }
-
-                    $('#result').html(
-                        '<div class="alert ' + alertClass + '">' +
-                        response.message +
-                        '</div>' +
-                        response.tableHtml
-                    );
+                    // عرض النتيجة وشريط التقدم في منطقة النتيجة
+                    $('#result').html('<div class="alert alert-success">تم الحفظ بنجاح!</div>' + response.progressHtml);
                 } else {
-                    $('#result').html(
-                        '<div class="alert alert-danger">' +
-                        response.message +
-                        '</div>'
-                    );
+                    $('#result').html('<div class="alert alert-danger">خطأ: ' + response.message + '</div>');
                 }
             },
             error: function () {
-                $('#result').html(
-                    '<div class="alert alert-danger">' +
-                    'Server error occurred.' +
-                    '</div>'
-                );
+                $('#result').html('<div class="alert alert-danger">حدث خطأ أثناء الاتصال بالسيرفر.</div>');
             }
         });
     });
