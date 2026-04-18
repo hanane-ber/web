@@ -1,41 +1,29 @@
-function addCourse() {
-    var row = document.createElement('div');
-    row.className = 'course-row';
-    row.innerHTML =
-        '<label>Course:</label>' +
-        '<input type="text" name="course[]" placeholder="e.g. Mathematics" required>' +
-        '<label>Credits:</label>' +
-        '<input type="number" name="credits[]" placeholder="e.g. 3" min="1" required>' +
-        '<label>Grade:</label>' +
-        '<select name="grade[]">' +
-            '<option value="4.0">A</option>' +
-            '<option value="3.0">B</option>' +
-            '<option value="2.0">C</option>' +
-            '<option value="1.0">D</option>' +
-            '<option value="0.0">F</option>' +
-        '</select>' +
-        '<button type="button" onclick="this.parentNode.remove()">Remove</button>';
+$(document).ready(function () {
+    $('#addCourse').click(function () {
+        var row = $('.course-row').first().clone();
+        row.find('input').val('');
+        row.find('.col:last').append('<button type="button" class="btn btn-danger remove-row ml-2">X</button>');
+        $('#courses').append(row);
+    });
 
-    document.getElementById('courses').appendChild(row);
-}
+    $(document).on('click', '.remove-row', function () {
+        $(this).closest('.course-row').remove();
+    });
 
-function validateForm() {
-    var courses = document.querySelectorAll('[name="course[]"]');
-    var credits = document.querySelectorAll('[name="credits[]"]');
-
-    for (var i = 0; i < courses.length; i++) {
-        if (courses[i].value === "") {
-            alert("All course name fields are required.");
-            return false;
-        }
-    }
-
-    for (var j = 0; j < credits.length; j++) {
-        if (isNaN(credits[j].value) || credits[j].value <= 0) {
-            alert("Credit hours must be positive numbers.");
-            return false;
-        }
-    }
-
-    return true;
-}
+    $('#gpaForm').submit(function (e) {
+        e.preventDefault();
+        $.ajax({
+            url: 'calculate.php',
+            type: 'POST',
+            data: $(this).serialize(),
+            dataType: 'json',
+            success: function (response) {
+                if (response.success) {
+                    $('#result').html('<div class="alert alert-info">' + response.message + '</div>' + response.tableHtml);
+                } else {
+                    $('#result').html('<div class="alert alert-danger">' + response.message + '</div>');
+                }
+            }
+        });
+    });
+});
